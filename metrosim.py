@@ -1,14 +1,20 @@
-version=0.3
-from ion import *
+version=0.4
+try:from keyboard import *
+except Exception:
+	from ion import *
+	def is_pressed(touche):
+		touches={"a":"KEY_ONE","q":"KEY_TWO","w":"KEY_THREE","s":"KEY_FOUR","up":"KEY_UP","down":"KEY_DOWN","a":"KEY_EXP","p":"KEY_LEFTPARENTHESIS","c":"KEY_LOG","m":"KEY_SEVEN","o":"KEY_FIVE","f":"KEY_FIVE","echap":"KEY_SHIFT","enter":"KEY_EXE","d":"KEY_IMAGINARY","control":"KEY_ALPHA","return":"KEY_BACKSPACE","i":"KEY_TANGENT"}
+		if touche in touches:return keydown(eval(touches[touche]))
 from time import *
 from kandinsky import *
 from random import *
 def BLANC():fill_rect(0,0,320,222,BlancC)
 BlancC=(240,240,240)
 VACMA=[False,0,0,0,True]
+
 #---
 # Personnaliser l'experience de conduite :
-VitessePlus=0.005 # Puissange d'acceleration (normal = 0.022)
+VitessePlus=0.05 # Puissange d'acceleration (normal = 0.022)
 VitesseMoins=0.08 # Puissance de freinage (normal = 0.04)
 Rame="286" # Numero de la rame
 Agent="---" # Identifiant agent
@@ -31,6 +37,31 @@ Vitesse=0
 AEAU=[None,None,None,None,True]
 Routes=[]
 Aleatoire="0"
+
+def arriveeDistance(arriveeDistanceSimVitesse,arriveeDistanceDistance=0):
+   for AffichageArriveeIteration in range(int(arriveeDistanceSimVitesse)):
+   	arriveeDistanceSimVitesse-=VitesseMoins
+   	arriveeDistanceDistance+=arriveeDistanceSimVitesse/24
+   return arriveeDistanceDistance
+  
+def demarrerService():
+	print("Service demarre a "+str(monotonic()))
+	draw_string("Demarrer service",10,130,'green')
+	sleep(1)
+	draw_string("Demarrer service",10,130)
+def terminerService():
+	print("Service termine a "+str(monotonic()))
+	draw_string("Fin service",10,155,'green')
+	sleep(1)
+	draw_string("Fin service",10,155)
+
+def rien():pass   
+#def bienvenueMenu0():bienvenueMenu(["Service",bienvenueMenuA,"Train",bienvenueMenuB,"Bienvenue",bienvenueMenuC],BienvenueAfficherMenu)
+#def bienvenueMenuA():bienvenueMenu(["Agent",rien,"Demarrer service",demarrerService,"Fin service",terminerService])
+#def bienvenueMenuB():bienvenueMenu(["Securites",bienvenueMenuBA,"Informations","",rien])
+#def bienvenueMenuBA():bienvenueMenu(["VACMA",BienvenueMenuSecurites("VACMA"),"AEAU",BienvenueMenuSecurites("AEAU"),"",rien])
+#def bienvenueMenuC():bienvenueMenu(["MSN v"+str(version),rien,"Technicentre",rien,"",rien])
+
 def BienvenuePasserMenu(BPMA,BPMB,BPMC):
   fill_rect(0,103,250,75,'white')
   sleep(0.3)
@@ -41,17 +72,26 @@ def BienvenueAfficherMenu(BienvenueAfficherMenuA,BienvenueAfficherMenuB,Bienvenu
   draw_string(BienvenueAfficherMenuA,10,105)
   draw_string(BienvenueAfficherMenuB,10,130)
   draw_string(BienvenueAfficherMenuC,10,155)
+  
+def bienvenueMenu(bienvenueMenu,bienvenueMenuFonctionPassage=BienvenuePasserMenu): # bienvenueMenuAfficherA,bienvenueMenuActionA,bienvenueMenuAfficherB,bienvenueMenuActionB,bienvenueMenuAfficherC,bienvenueMenuActionC
+	bienvenueMenuFonctionPassage(bienvenueMenu[0],bienvenueMenu[2],bienvenueMenu[4])
+	while not is_pressed("d"):
+		if is_pressed("a"):bienvenueMenu[1]()
+		elif is_pressed("q"):bienvenueMenu[3]()
+		elif is_pressed("w"):bienvenueMenu[5]()
+	BienvenuePasserMenu(bienvenueMenu[0],bienvenueMenu[2],bienvenueMenu[4])
+
 def BienvenueMenuA():BienvenuePasserMenu("Service","Train","Bienvenue")
 def BienvenueMenuSecurites(BMSSecurite):
   BienvenuePasserMenu("A manip. avec prec.","Activer","Desactiver")
-  while not keydown(KEY_FOUR):
-    if keydown(KEY_TWO):
+  while not is_pressed("s"):
+    if is_pressed("q"):
       eval(BMSSecurite)[4]=False
       print("["+BMSSecurite+"] activee, "+str(monotonic()))
       draw_string("Activer",10,130,'green')
       sleep(1.2)
       draw_string("Activer",10,130,'black')
-    elif keydown(KEY_THREE):
+    elif is_pressed("w"):
       eval(BMSSecurite)[4]=False
       print("["+BMSSecurite+"] desactivee, "+str(monotonic()))
       draw_string("Desactiver",10,155,'green')
@@ -72,7 +112,7 @@ draw_string("PA",262,126,(245,245,245))
 draw_string("CM",262,151)
 PA=False
 i=0
-while not keydown(KEY_BACKSPACE):
+while not is_pressed("return"):
   if int(Vitesse)<Limite:draw_string(str(int(Vitesse)),155,20)
   elif int(Vitesse)==Limite:draw_string(str(int(Vitesse)),155,20,'yellow')
   else:draw_string(str(int(Vitesse)),155,20,'red')
@@ -82,49 +122,15 @@ while not keydown(KEY_BACKSPACE):
   else:
     fill_rect(10,30,10,20,'white')
     fill_rect(20,30,10,20,'green')
-  draw_string(str(Limite),75,30)
-#Tablette Bienvenue
-  if keydown(KEY_SIX) and (keydown(KEY_ONE) or keydown(KEY_TWO) or keydown(KEY_THREE)):
-    BienvenueMenuA()
-    while not keydown(KEY_FOUR):
-      if keydown(KEY_ONE):
-        BienvenuePasserMenu("Agent","Demarrer service","Fin service")
-        while not keydown(KEY_FOUR):
-          if keydown(KEY_ONE):
-            BienvenuePasserMenu("Connexion","Deconnexion",Agent)
-            while not keydown(KEY_FOUR):pass
-            BienvenuePasserMenu("Agent","Demarrer service","Fin service")
-          elif keydown(KEY_TWO):
-            print("Service demarre a "+str(monotonic()))
-            draw_string("Demarrer service",10,130,'green')
-            sleep(1)
-            BienvenuePasserMenu("Agent","Demarrer service","Fin service")
-          elif keydown(KEY_THREE):
-            print("Service termine a "+str(monotonic()))
-            draw_string("Fin service",10,155,'green')
-            sleep(1)
-            BienvenuePasserMenu("Agent","Demarrer service","Fin service")
-        BienvenueMenuA()
-      elif keydown(KEY_TWO):
-        BienvenuePasserMenu("Securites","Informations","Electronique embarquee")
-        while not keydown(KEY_FOUR):
-          if keydown(KEY_ONE):
-            BienvenuePasserMenu("VACMA","AEAU","")
-            while not keydown(KEY_FOUR):
-              if keydown(KEY_ONE):BienvenueMenuSecurites("VACMA")
-              elif keydown(KEY_TWO):BienvenueMenuSecurites("AEAU")
-        BienvenueMenuA()
-      elif keydown(KEY_THREE):
-        BienvenuePasserMenu("Metro Simulator Numworks","Redemarrer la simulation","version "+str(version))
-        while not keydown(KEY_FOUR):pass
-        BienvenuePasserMenu("Service","Train","Bienvenue")
-  if keydown(KEY_EXP) and keydown(KEY_LEFTPARENTHESIS):
+  draw_string(str(Limite),75,30)  
+  #if (is_pressed("a") and not is_pressed("p")) or is_pressed("q") or is_pressed("w"):bienvenueMenu0()
+  if is_pressed("a") and is_pressed("p"):
     if not PA:print("PA active, "+str(monotonic()))
     PA=True
     VACMA[4]=False
     draw_string("PA",262,126)
     draw_string("CM",262,151,(245,245,245))
-  elif keydown(KEY_LOG) and keydown(KEY_SEVEN):
+  elif is_pressed("c") and is_pressed("m"):
     if PA:print("PA desactive, "+str(monotonic()))
     PA=False
     VACMA[4]=True
@@ -145,10 +151,10 @@ while not keydown(KEY_BACKSPACE):
   else:fill_rect(260,30,28,21,BlancC)
   draw_string(str(int(ProchainArret[0])),260,60)
   draw_string(str(int(ProchainFeu[0])),10,60)
-  if keydown(KEY_FIVE) and ProchainArret[0]<20 and Vitesse<0.01:
+  if is_pressed("o") and ProchainArret[0]<20 and Vitesse<0.01:
     Porte('green')
     sleep(2)
-    while not keydown(KEY_FIVE):
+    while not is_pressed("f"):
       if ProchainArret[1] and randrange(0,20001)==0:
         fill_rect(270,30,8,8,'black')
         fill_rect(260,43,8,8,'black')
@@ -163,8 +169,8 @@ while not keydown(KEY_BACKSPACE):
     BLANC()
     print("Station, "+str(monotonic()))
     i=0
-  if (keydown(KEY_DOWN) and Vitesse>0) or (PA and ((ProchainArret[0]<335 and Vitesse>40) or (ProchainArret[0]<430 and Limite==70 and Vitesse>40) or ProchainArret[0]<=137 or (ProchaineLimite[1]<Vitesse and ProchaineLimite[0]<=(10*(Vitesse-ProchaineLimite[1]))) or Vitesse>Limite+2*VitessePlus or ProchainFeu[1])):Vitesse-=VitesseMoins
-  elif keydown(KEY_UP) or PA:
+  if (is_pressed("down") and Vitesse>0) or (PA and ((ProchainArret[0]<280 and Vitesse>40) or (ProchainArret[0]<300 and Limite==70 and Vitesse>40) or int(320-ProchainArret[0])+int(arriveeDistance(Vitesse))>=308 or (ProchaineLimite[1]<Vitesse and ProchaineLimite[0]<=(10*(Vitesse-ProchaineLimite[1]))) or Vitesse>Limite+2*VitessePlus or ProchainFeu[1])):Vitesse-=VitesseMoins
+  elif is_pressed("up") or PA:
     if not DefautOP or (PA and Vitesse)<=Limite:Vitesse+=VitessePlus
     elif (PA==False and Defaut!="PE") or (Defaut!="PE" and (PA and Vitesse<=Limite-1)):Vitesse+=VitessePlus
   elif Vitesse>0.0001 and not PA:Vitesse-=0.0002
@@ -198,8 +204,8 @@ while not keydown(KEY_BACKSPACE):
   elif DefautOP and randrange(0,101)==0:DefautOP=False
   if ProchainFeu[1] and randrange(0,1000)==0:ProchainFeu[1]=False
   if ProchainArret[0]<500 and ProchainArret[0]>480:fill_rect(260,90,30,30,'red')
-  if keydown(KEY_SHIFT):
-    if not FU and not keydown(KEY_EXE):print("FU active manuellement, "+str(monotonic()))
+  if is_pressed("echap"):
+    if not FU and not is_pressed("echap"):print("FU active manuellement, "+str(monotonic()))
     FU=True
   if FU and Vitesse>0.0845+VitesseMoins:Vitesse-=0.0846
   elif FU:Vitesse-=0.01
@@ -216,19 +222,14 @@ while not keydown(KEY_BACKSPACE):
   if DefautOP:draw_string("Defaut",185,10,'orange')
   elif DefautOP=="i":draw_string("VACMA",188,25,'blue')
   else:draw_string("Defaut",185,10,(245,245,245))
-  if FU and keydown(KEY_SHIFT) and keydown(KEY_EXE):FU=False
+  if FU and is_pressed("echap") and is_pressed("enter"):FU=False
   if ProchainArret[0]<321:
     fill_rect(0,180,320,40,'white')
     fill_rect(0,190,int(320-ProchainArret[0]),30,'blue')
-    AffichageArriveeSimVitesse=Vitesse
-    AffichageArriveeDistance=0
-    for AffichageArriveeIteration in range(int(AffichageArriveeSimVitesse)):
-      AffichageArriveeSimVitesse-=0.04
-      AffichageArriveeDistance+=AffichageArriveeSimVitesse/12
-    fill_rect(int(320-ProchainArret[0])+int(AffichageArriveeDistance),190,4,30,'orange')
+    fill_rect(int(320-ProchainArret[0])+int(arriveeDistance(Vitesse)),190,4,30,'orange')
     fill_rect(302,220,19,2,'green')
     fill_rect(0,220,302,2,'red')
-  if keydown(KEY_ALPHA) and keydown(KEY_LOG):
+  if is_pressed("a") and is_pressed("d"):
     Commande=input("Commande ? ")
     if Commande=="CreaCarte":
       print("Entree en mode creation de carte...\nPressez BAKSPACE pour quitter et enregistrer")
@@ -236,19 +237,19 @@ while not keydown(KEY_BACKSPACE):
       DistanceCreaCarte=0
       VitesseCreaCarte=0
       CreaCarteCarte=[]
-      while not keydown(KEY_BACKSPACE):
-        if keydown(KEY_DOWN) and VitesseCreaCarte>0:VitesseCreaCarte-=0.04
-        elif keydown(KEY_UP):VitesseCreaCarte+=0.012
+      while not is_pressed("return"):
+        if is_pressed("down") and VitesseCreaCarte>0:VitesseCreaCarte-=0.04
+        elif is_pressed("up"):VitesseCreaCarte+=0.012
         elif VitesseCreaCarte>0.0001:VitesseCreaCarte-=0.0002
         draw_string(str(VitesseCreaCarte),0,0)
         draw_string(str(DistanceCreaCarte),0,30)
         DistanceCreaCarte+=VitesseCreaCarte/160
-        if keydown(KEY_FIVE):
+        if is_pressed("o"):
           CreaCarteCarte.append(int(DistanceCreaCarte))
           print(DistanceCreaCarte)
           DistanceCreaCarte=0
           sleep(0.5)
-          while not keydown(KEY_FIVE):pass
+          while not is_pressed("f"):pass
           sleep(1)
         if VitesseCreaCarte<0:Vitesse=0
       print(CreaCarteCarte)
@@ -287,7 +288,7 @@ while not keydown(KEY_BACKSPACE):
       ProchainArret[0]=750
     i=0
   if Vitesse>0.1 and VACMA[4]:
-    if keydown(KEY_ALPHA):
+    if is_pressed("control"):
       VACMA[1]+=1
       VACMA[2]=0
     else:
@@ -339,5 +340,5 @@ while not keydown(KEY_BACKSPACE):
       fill_rect(int((ProchainArret[0]-320)*2.5),217,300,10,'black')
       draw_string(ProchainArret[2],int((ProchainArret[0]-300)*2.5),198)
   elif ProchainArret[0]>322:fill_rect(0,180,320,40,BlancC)
-  if keydown(KEY_TANGENT):i=0
+  if is_pressed("i"):i=0
   Aleatoire=str(randrange(0,1000))
