@@ -1,9 +1,9 @@
-version=0.4
+version=0.5
 try:from keyboard import *
 except Exception:
 	from ion import *
 	def is_pressed(touche):
-		touches={"a":"KEY_ONE","q":"KEY_TWO","w":"KEY_THREE","s":"KEY_FOUR","up":"KEY_UP","down":"KEY_DOWN","p":"KEY_LEFTPARENTHESIS","c":"KEY_LOG","m":"KEY_SEVEN","o":"KEY_FIVE","f":"KEY_FIVE","echap":"KEY_SHIFT","enter":"KEY_EXE","d":"KEY_IMAGINARY","control":"KEY_ALPHA","return":"KEY_BACKSPACE","i":"KEY_TANGENT"}
+		touches={"w":"KEY_ONE","x":"KEY_TWO","c":"KEY_THREE","s":"KEY_FOUR","a":"KEY_EXP","up":"KEY_UP","down":"KEY_DOWN","p":"KEY_LEFTPARENTHESIS","c":"KEY_LOG","m":"KEY_SEVEN","o":"KEY_FIVE","f":"KEY_FIVE","echap":"KEY_SHIFT","enter":"KEY_EXE","d":"KEY_IMAGINARY","control":"KEY_ALPHA","backspace":"KEY_BACKSPACE","i":"KEY_TANGENT"}
 		if touche in touches:return keydown(eval(touches[touche]))
 from time import *
 from kandinsky import *
@@ -12,14 +12,17 @@ def BLANC():fill_rect(0,0,320,222,BlancC)
 BlancC=(240,240,240)
 VACMA=[False,0,0,0,True]
 
+# Coordonnées espace restant : x40,y5
+
 #---
 # Personnaliser l'experience de conduite :
-VitessePlus=0.05 # Puissange d'acceleration (normal = 0.022)
-VitesseMoins=0.08 # Puissance de freinage (normal = 0.04)
+VitessePlus=0.05 # Puissange d'acceleration (normal = 0.05)
+VitesseMoins=0.08 # Puissance de freinage (normal = 0.08)
 Rame="286" # Numero de la rame
 Agent="---" # Identifiant agent
-#VACMA[4]=False # Enlever le premier diese (#) pour desactiver la VACMA
+#VACMA[4]=False # Enlever le premier croisillon (#) pour desactiver la VACMA
 #---
+
 print("Bienvenue sur Metro Simulator Numworks !")
 sleep(1)
 NomsArrets=["Abbesses","Adrienne Bolland","Aeroport d'Orly","Aime Cesaire","Alesia","Alexandra David-Neel","Alexandre Dumas","Alma-Marceau","Anatole France","Angelique Compoint","Anna de Noailles","Anny Flore","Antony"]
@@ -57,11 +60,11 @@ def terminerService():
 	draw_string("Fin service",10,155)
 
 def rien():pass   
-#def bienvenueMenu0():bienvenueMenu(["Service",bienvenueMenuA,"Train",bienvenueMenuB,"Bienvenue",bienvenueMenuC],BienvenueAfficherMenu)
-#def bienvenueMenuA():bienvenueMenu(["Agent",rien,"Demarrer service",demarrerService,"Fin service",terminerService])
-#def bienvenueMenuB():bienvenueMenu(["Securites",bienvenueMenuBA,"Informations","",rien])
-#def bienvenueMenuBA():bienvenueMenu(["VACMA",BienvenueMenuSecurites("VACMA"),"AEAU",BienvenueMenuSecurites("AEAU"),"",rien])
-#def bienvenueMenuC():bienvenueMenu(["MSN v"+str(version),rien,"Technicentre",rien,"",rien])
+def bienvenueMenu0():bienvenueMenu(["Service",bienvenueMenuA,"Train",bienvenueMenuB,"Bienvenue",bienvenueMenuC],BienvenueAfficherMenu)
+def bienvenueMenuA():bienvenueMenu(["Agent",rien,"Demarrer service",demarrerService,"Fin service",terminerService])
+def bienvenueMenuB():bienvenueMenu(["Securites",bienvenueMenuBA,"Informations","",rien])
+def bienvenueMenuBA():bienvenueMenu(["VACMA",BienvenueMenuSecurites("VACMA"),"AEAU",BienvenueMenuSecurites("AEAU"),"",rien])
+def bienvenueMenuC():bienvenueMenu(["MSN v"+str(version),rien,"Technicentre",rien,"",rien])
 
 class Afficheur():
 	def __init__(self,afficheurX,afficheurY,afficheurTexteInitial="00",afficheurCouleurInitiale="black"):
@@ -112,23 +115,23 @@ def BienvenueAfficherMenu(BienvenueAfficherMenuA,BienvenueAfficherMenuB,Bienvenu
   
 def bienvenueMenu(bienvenueMenu,bienvenueMenuFonctionPassage=BienvenuePasserMenu): # bienvenueMenuAfficherA,bienvenueMenuActionA,bienvenueMenuAfficherB,bienvenueMenuActionB,bienvenueMenuAfficherC,bienvenueMenuActionC
 	bienvenueMenuFonctionPassage(bienvenueMenu[0],bienvenueMenu[2],bienvenueMenu[4])
-	while not is_pressed("d"):
-		if is_pressed("a"):bienvenueMenu[1]()
-		elif is_pressed("q"):bienvenueMenu[3]()
-		elif is_pressed("w"):bienvenueMenu[5]()
+	while not is_pressed("s"):
+		if is_pressed("w"):bienvenueMenu[1]()
+		elif is_pressed("x"):bienvenueMenu[3]()
+		elif is_pressed("c"):bienvenueMenu[5]()
 	BienvenuePasserMenu(bienvenueMenu[0],bienvenueMenu[2],bienvenueMenu[4])
 
 def BienvenueMenuA():BienvenuePasserMenu("Service","Train","Bienvenue")
 def BienvenueMenuSecurites(BMSSecurite):
   BienvenuePasserMenu("A manip. avec prec.","Activer","Desactiver")
   while not is_pressed("s"):
-    if is_pressed("q"):
+    if is_pressed("x"):
       eval(BMSSecurite)[4]=False
       print("["+BMSSecurite+"] activee, "+str(monotonic()))
       draw_string("Activer",10,130,'green')
       sleep(1.2)
       draw_string("Activer",10,130,'black')
-    elif is_pressed("w"):
+    elif is_pressed("c"):
       eval(BMSSecurite)[4]=False
       print("["+BMSSecurite+"] desactivee, "+str(monotonic()))
       draw_string("Desactiver",10,155,'green')
@@ -158,7 +161,8 @@ BLANC()
 PA=False
 i=0
 Defaut=""
-while not is_pressed("return"):
+BienvenueAfficherMenu("Service","Train","Bienvenue")
+while not is_pressed("backspace"):
   if int(Vitesse)<Limite:draw_string(str(int(Vitesse)),155,20)
   elif int(Vitesse)==Limite:draw_string(str(int(Vitesse)),155,20,'yellow')
   else:draw_string(str(int(Vitesse)),155,20,'red')
@@ -168,9 +172,8 @@ while not is_pressed("return"):
   else:
     fill_rect(10,30,10,20,'white')
     fill_rect(20,30,10,20,'green')
-  limiteAfficheur.ecrire(str(Limite))
-  #draw_string(str(Limite),75,30)  
-  #if (is_pressed("a") and not is_pressed("p")) or is_pressed("q") or is_pressed("w"):bienvenueMenu0()
+  limiteAfficheur.ecrire(str(Limite)) 
+  if (is_pressed("a") and not is_pressed("p")) or is_pressed("q") or is_pressed("w"):bienvenueMenu0()
   if is_pressed("a") and is_pressed("p"):
     if not PA:print("PA active, "+str(monotonic()))
     PA=True
@@ -206,7 +209,6 @@ while not is_pressed("return"):
     Porte('yellow')
     sleep(5)
     Porte('red')
-    prochainArret=[randrange(900,1600),choice([False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True])]
     if RouteOP:
       Arret+=1
       prochainArret=RouteActuelle[Arret]
@@ -222,7 +224,7 @@ while not is_pressed("return"):
   prochainArret[0]-=Vitesse/155
   prochainFeu[0]-=Vitesse/155
   prochaineLimite[0]-=Vitesse/155
-  if prochainArret[0]<0:prochainArret=[randrange(900,1600),choice([False,False,False,False,False,False,False,False,False,False,False,True])]
+  if prochainArret[0]<0:prochainArret=[randrange(900,1600),choice([False,False,False,False,False,False,False,False,False,False,False,True]),""]
   if prochainFeu[0]<0:
     if prochainFeu[1] and AEAU[4]:
       FU=True
@@ -281,7 +283,7 @@ while not is_pressed("return"):
       DistanceCreaCarte=0
       VitesseCreaCarte=0
       CreaCarteCarte=[]
-      while not is_pressed("return"):
+      while not is_pressed("backspace"):
         if is_pressed("down") and VitesseCreaCarte>0:VitesseCreaCarte-=0.04
         elif is_pressed("up"):VitesseCreaCarte+=0.012
         elif VitesseCreaCarte>0.0001:VitesseCreaCarte-=0.0002
@@ -355,23 +357,6 @@ while not is_pressed("return"):
   if Vitesse>=71:
     if not FU:print("FU active, vitesse > 70, "+str(monotonic()))
     FU=True
-  if i==0:
-    BLANC()
-    BienvenueAfficherMenu("Service","Train","Bienvenue")
-    if PA:
-      draw_string("PA",262,126)
-      draw_string("CM",262,151,(245,245,245))
-    else:
-      draw_string("PA",262,126,(245,245,245))
-      draw_string("CM",262,151)
-    fill_rect(260,90,30,30,BlancC)
-    if len(prochainArret)>2:prochainArret[2]=choice(NomsArrets)
-    else:prochainArret.append(choice(NomsArrets))
-    Acquitter=False
-    i=1
-  if (prochainArret[0]<700 and len(prochainArret)<3) or (PA and randrange(0,10000)==0):Acquitter=True
-  if Acquitter:draw_string("Acquitter",40,5,'red')
-  else:draw_string("Acquitter",40,5,BlancC)
   if prochainArret[0]>=330:
     fill_rect(0,180,320,40,'white')
     fill_rect(0,190,20,30,'blue')
