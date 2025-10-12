@@ -8,16 +8,16 @@ except Exception:
 from time import *
 from kandinsky import *
 from random import *
-def BLANC():fill_rect(0,0,320,222,BlancC)
-BlancC=(240,240,240)
+def BLANC():fill_rect(0,0,320,222,BLANCC)
+BLANCC=(240,240,240)
 VACMA=[False,0,0,0,True]
 
 # Coordonnees espace restant : x40,y5
 
 #---
 # Personnaliser l'experience de conduite :
-VitessePlus=0.05 # Puissange d'acceleration (normal = 0.05)
-VitesseMoins=0.08 # Puissance de freinage (normal = 0.08)
+vitessePlus=0.05 # Puissange d'acceleration (normal = 0.05)
+vitesseMoins=0.08 # Puissance de freinage (normal = 0.08)
 Rame="286" # Numero de la rame
 Agent="---" # Identifiant agent
 #VACMA[4]=False # Enlever le premier croisillon (#) pour desactiver la VACMA
@@ -32,22 +32,23 @@ prochainArret=[5,False,"Sortie du garage"]
 #[Distance,Rouge?]
 prochainFeu=[10,False]
 #[Distance,Limite]
-prochaineLimite=[10,50]
+prochaineLimiteVitesse=[10,50]
 DefautOP=False
 def Porte(PorteCouleur):fill_rect(155,50,10,10,PorteCouleur)
-Limite=30
-Vitesse=0
+limiteVitesse=30
+vitesse=0
 AEAU=[None,None,None,None,True]
 Routes=[]
-Aleatoire="0"
 gris=(245,245,245) # Couleur grisee, pour afficheurs
 
 def arriveeDistance(arriveeDistanceSimVitesse,arriveeDistanceDistance=0):
    for AffichageArriveeIteration in range(int(arriveeDistanceSimVitesse)):
-   	arriveeDistanceSimVitesse-=VitesseMoins
+   	arriveeDistanceSimVitesse-=vitesseMoins
    	arriveeDistanceDistance+=arriveeDistanceSimVitesse/24
    return arriveeDistanceDistance
-  
+   
+def faibleChance():return choice([False,False,False,False,False,False,False,False,False,False,False,True])
+
 def demarrerService():
 	print("Service demarre a "+str(monotonic()))
 	draw_string("Demarrer service",10,130,'green')
@@ -59,7 +60,7 @@ def finService():
 	sleep(1)
 	draw_string("Fin service",10,155)
 
-def bienvenuMenu0Affichage():BienvenuePasserMenu("Service","Train","Bienvenue")
+def bienvenueMenu0Affichage():BienvenuePasserMenu("Service","Train","Bienvenue")
 def rien():pass   
 def bienvenueMenu0():bienvenueMenu(["Service",bienvenueMenuA,"Train",bienvenueMenuB,"Bienvenue",bienvenueMenuC],bienvenueMenuFonctionPassage=BienvenueAfficherMenu)
 def bienvenueMenuA():bienvenueMenu(["Agent",rien,"Demarrer service",bienvenueMenuAB,"Fin service",bienvenueMenuAC])
@@ -77,15 +78,17 @@ class Afficheur():
 		self.longueur=len(str(self.texte))
 		self.couleur=afficheurCouleurInitiale
 		self.ecrire(self.texte)
-	def ecrire(self,afficheurTexte=None):
+	def ecrire(self,afficheurTexte=None,nettoyer=True,nettoyerCouleur=BLANCC,ecrireCouleur=None):
+		if ecrireCouleur!=None:self.couleur=ecrireCouleur
+		if nettoyer and afficheurTexte!=None and self.longueur>len(afficheurTexte):self.nettoyer(nettoyerCouleur=nettoyerCouleur)
 		if afficheurTexte!=None:
 			self.texte=afficheurTexte
-			self.longueur=len(str(self.texte))
+			self.longueur=len(self.texte)
 		draw_string(self.texte,self.x,self.y,self.couleur)
 	def changerCouleur(self,afficheurCouleur):
 		self.couleur=afficheurCouleur
 		self.ecrire()
-	def nettoyer(self,nettoyerCommencement=0):fill_rect(self.x+nettoyerCommencement*10,self.y,self.longueur*10,18,BlancC) # Caractère draw_string prend 10*18
+	def nettoyer(self,nettoyerCommencement=0,nettoyerCouleur=BLANCC):fill_rect(self.x+nettoyerCommencement*10,self.y,self.longueur*10,18,BLANCC) # Caractere draw_string prend 10*18
 
 class AfficheurModeConduite():
 	def __init__(self,afficheurPAX,afficheurPAY,afficheurCMX,afficheurCMY,modeInitial=False): # Pour le mode, True est le PA et False la CM
@@ -106,6 +109,14 @@ class AfficheurModeConduite():
 	def afficheurRaffraichir(self): # Raffraichir l'affichage du mode de conduite, notamment apres un arrêt en station
 		self.PA.ecrire()
 		self.CM.ecrire()
+		
+class AfficheurVitesse():
+	def __init__(self,afficheurX,afficheurY):self.afficheur=Afficheur(afficheurX,afficheurY)
+	def raffraichir(self):
+		vitesseEcrire=str(int(vitesse))
+		if vitesse<limiteVitesse:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="black")
+		elif int(vitesse)==limiteVitesse:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="yellow")
+		else:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="red")
 
 def BienvenuePasserMenu(BPMA,BPMB,BPMC):
   fill_rect(0,103,250,75,'white')
@@ -150,43 +161,38 @@ def BienvenueMenuSecurites(BMSSecurite):
 def PauseVoyant():
   fill_rect(0,0,6,15,'red')
   fill_rect(9,0,6,15,'red')
-def DepauseVoyant():fill_rect(0,0,15,15,BlancC)
+def DepauseVoyant():fill_rect(0,0,15,15,BLANCC)
 
-limiteAfficheur=Afficheur(75,30)
-prochaineLimiteAfficheur=Afficheur(75,55,str(prochaineLimite[1]))
-prochaineLimiteDistanceAfficheur=Afficheur(75,80,str(int(prochaineLimite[0])))
-def raffraichirProchaineLimite():
-	if prochaineLimite[1]>Limite:prochaineLimiteAfficheur.changerCouleur("red")
-	else:prochaineLimiteAfficheur.changerCouleur("green")
+limiteVitesseAfficheur=Afficheur(75,30)
+prochaineLimiteVitesseAfficheur=Afficheur(75,55,str(prochaineLimiteVitesse[1]))
+prochaineLimiteVitesseDistanceAfficheur=Afficheur(75,80,str(int(prochaineLimiteVitesse[0])))
+def raffraichirProchaineLimiteVitesse():
+	if prochaineLimiteVitesse[1]>limiteVitesse:prochaineLimiteVitesseAfficheur.changerCouleur("red")
+	else:prochaineLimiteVitesseAfficheur.changerCouleur("green")
 	
 prochainFeuDistanceAfficheur=Afficheur(10,60,str(int(prochainFeu[0])))
 prochainArretDistanceAfficheur=Afficheur(260,60,str(int(prochainArret[0])))
-abc=Afficheur(0,0,"ahhhhh")
 
-prochainFeuLen=1
-prochainArretLen=1
-prochaineLimiteLen=6
+vitesseAfficheur=AfficheurVitesse(155,20)
+
 Porte('red')
 RouteOP=False
 BLANC()
 PA=False
-i=0
 Defaut=""
 BienvenueAfficherMenu("Service","Train","Bienvenue")
 afficheurModeConduite=AfficheurModeConduite(262,126,262,151,False)
 while not is_pressed("backspace"):
-  if int(Vitesse)<Limite:draw_string(str(int(Vitesse)),155,20)
-  elif int(Vitesse)==Limite:draw_string(str(int(Vitesse)),155,20,'yellow')
-  else:draw_string(str(int(Vitesse)),155,20,'red')
+  vitesseAfficheur.raffraichir()
   if prochainFeu[1]:
     fill_rect(10,30,10,20,'red')
     fill_rect(20,30,10,20,'white')
   else:
     fill_rect(10,30,10,20,'white')
     fill_rect(20,30,10,20,'green')
-  limiteAfficheur.ecrire(str(Limite)) 
+  limiteVitesseAfficheur.ecrire(str(limiteVitesse)) 
   if is_pressed(toucheBienvenueMenuA) or is_pressed(toucheBienvenueMenuB) or is_pressed(toucheBienvenueMenuC):bienvenueMenu0()
-  if is_pressed("a") and is_pressed("p"):
+  if is_pressed("a") and is_pressed("p"):    
     if not PA:print("PA active, "+str(monotonic()))
     PA=True
     VACMA[4]=False
@@ -196,8 +202,9 @@ while not is_pressed("backspace"):
     PA=False
     VACMA[4]=True
     afficheurModeConduite.afficheurChangerMode(False) # Afficher PA desactive
-  raffraichirProchaineLimite()
-  prochaineLimiteDistanceAfficheur.ecrire(str(int(prochaineLimite[0])))
+  raffraichirProchaineLimiteVitesse()
+  prochaineLimiteVitesseAfficheur.ecrire(str(prochaineLimiteVitesse[1]))
+  prochaineLimiteVitesseDistanceAfficheur.ecrire(str(int(prochaineLimiteVitesse[0])))
   if prochainArret[0]<100:
     if prochainArret[1]:
       fill_rect(270,30,8,8,'white')
@@ -207,14 +214,14 @@ while not is_pressed("backspace"):
       fill_rect(270,30,8,8,'black')
       fill_rect(260,43,8,8,'black')
       fill_rect(280,43,8,8,'black')
-  else:fill_rect(260,30,28,21,BlancC)
+  else:fill_rect(260,30,28,21,BLANCC)
   prochainArretDistanceAfficheur.ecrire(str(int(prochainArret[0])))
   prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
-  if is_pressed("o") and prochainArret[0]<20 and Vitesse<0.01:
+  if is_pressed("o") and prochainArret[0]<20 and vitesse<0.01:
     Porte('green')
     sleep(2)
     while not is_pressed("f"):
-      if prochainArret[1] and randrange(0,20001)==0:
+      if prochainArret[1] and randrange(0,20000)==0:
         fill_rect(270,30,8,8,'black')
         fill_rect(260,43,8,8,'black')
         fill_rect(280,43,8,8,'black')
@@ -225,34 +232,29 @@ while not is_pressed("backspace"):
       Arret+=1
       prochainArret=RouteActuelle[Arret]
     BLANC()
+    bienvenueMenu0Affichage()
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
-    i=0
-  if (is_pressed("down") and Vitesse>0) or (PA and ((prochainArret[0]<280 and Vitesse>40) or (prochainArret[0]<300 and Limite==70 and Vitesse>40) or int(320-prochainArret[0])+int(arriveeDistance(Vitesse))>=308 or (prochaineLimite[1]<Vitesse and prochaineLimite[0]<=(10*(Vitesse-prochaineLimite[1]))) or Vitesse>Limite+2*VitessePlus or prochainFeu[1])):Vitesse-=VitesseMoins
+    prochainArret=[randrange(900,1600),faibleChance(),""]
+  if (is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arriveeDistance(vitesse))>=308 or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus or prochainFeu[1]):vitesse-=vitesseMoins
   elif is_pressed("up") or PA:
-    if not DefautOP or (PA and Vitesse)<=Limite:Vitesse+=VitessePlus
-    elif (PA==False and Defaut!="PE") or (Defaut!="PE" and (PA and Vitesse<=Limite-1)):Vitesse+=VitessePlus
-  elif Vitesse>0.0001 and not PA:Vitesse-=0.0002
-  if DefautOP and Defaut=="PE":Vitesse-=0.01
-  prochainArret[0]-=Vitesse/155
-  prochainFeu[0]-=Vitesse/155
-  prochaineLimite[0]-=Vitesse/155
-  if prochainArret[0]<0:prochainArret=[randrange(900,1600),choice([False,False,False,False,False,False,False,False,False,False,False,True]),""]
+    if not DefautOP or (PA and vitesse)<=limiteVitesse:vitesse+=vitessePlus
+    elif (PA==False and Defaut!="PE") or (Defaut!="PE" and (PA and vitesse<=limiteVitesse-1)):vitesse+=vitessePlus
+  elif vitesse>0.0001 and not PA:vitesse-=0.0002
+  if DefautOP and Defaut=="PE":vitesse-=0.01
+  prochainArret[0]-=vitesse/155
+  prochainFeu[0]-=vitesse/155
+  prochaineLimiteVitesse[0]-=vitesse/155
+  if prochainArret[0]<0:prochainArret=[randrange(900,1600),faibleChance(),""]
   if prochainFeu[0]<0:
     if prochainFeu[1] and AEAU[4]:
       FU=True
       print("[AEAU] FU active, "+str(monotonic()))
-    prochainFeu=[randrange(330,500),choice([False,False,False,False,False,False,False,False,False,False,False,False,False,True])]
-  if prochaineLimite[0]<0:
-    Limite=prochaineLimite[1]
-    prochaineLimite[1]=choice([40,50,60,70])
-    prochaineLimite[0]=randrange(500,800+([40,50,60,70].index(prochaineLimite[1])*prochaineLimite[1]))
-  if len(str(int(prochainFeu[0])))<prochainFeuLen:fill_rect(10,60,30,30,BlancC)
-  prochainFeuLen=len(str(int(prochainFeu[0])))
-  if len(str(int(prochaineLimite[0])))<prochaineLimiteLen:fill_rect(75,80,40,17,BlancC)
-  prochaineLimiteLen=len(str(int(prochaineLimite[0])))
-  if len(str(int(prochainArret[0])))<prochainArretLen:fill_rect(260,60,40,30,BlancC)
-  prochainArretLen=len(str(int(prochainArret[0])))
+    prochainFeu=[randrange(330,500),faibleChance()]
+  if prochaineLimiteVitesse[0]<0:
+    limiteVitesse=prochaineLimiteVitesse[1]
+    prochaineLimiteVitesse[1]=choice([40,50,60,70])
+    prochaineLimiteVitesse[0]=randrange(500,800+([40,50,60,70].index(prochaineLimiteVitesse[1])*prochaineLimiteVitesse[1]))
   Porte('red')
   if not DefautOP and randrange(0,6001)==0:
     DefautOP=True
@@ -264,15 +266,15 @@ while not is_pressed("backspace"):
   if is_pressed("echap"):
     if not FU and not is_pressed("echap"):print("FU active manuellement, "+str(monotonic()))
     FU=True
-  if FU and Vitesse>0.0845+VitesseMoins:Vitesse-=0.0846
-  elif FU:Vitesse-=0.01
+  if FU and vitesse>0.0845+vitesseMoins:vitesse-=0.0846
+  elif FU:vitesse-=0.01
   if FU:draw_string("FU",152,80,'black')
   elif FU=="i":draw_string("VACMA",188,25,'blue')
   else:draw_string("FU",152,80,(245,245,245))
   if VACMA[0]:draw_string("VACMA",188,25,'red')
   else:
     if VACMA[4]:
-      if Vitesse>0:draw_string("VACMA",188,25,'green')
+      if vitesse>0:draw_string("VACMA",188,25,'green')
       else:draw_string("VACMA",188,25,'black')
     elif VACMA[4]=="i":draw_string("VACMA",188,25,'blue')
     else:draw_string("VACMA",188,25,(245,245,245))
@@ -283,7 +285,7 @@ while not is_pressed("backspace"):
   if prochainArret[0]<321:
     fill_rect(0,180,320,40,'white')
     fill_rect(0,190,int(320-prochainArret[0]),30,'blue')
-    fill_rect(int(320-prochainArret[0])+int(arriveeDistance(Vitesse)),190,4,30,'orange')
+    fill_rect(int(320-prochainArret[0])+int(arriveeDistance(vitesse)),190,4,30,'orange')
     fill_rect(302,220,19,2,'green')
     fill_rect(0,220,302,2,'red')
   if is_pressed("a") and is_pressed("d"):
@@ -292,15 +294,15 @@ while not is_pressed("backspace"):
       print("Entree en mode creation de carte...\nPressez BAKSPACE pour quitter et enregistrer")
       sleep(2)
       DistanceCreaCarte=0
-      VitesseCreaCarte=0
+      vitesseCreaCarte=0
       CreaCarteCarte=[]
       while not is_pressed("backspace"):
-        if is_pressed("down") and VitesseCreaCarte>0:VitesseCreaCarte-=0.04
-        elif is_pressed("up"):VitesseCreaCarte+=0.012
-        elif VitesseCreaCarte>0.0001:VitesseCreaCarte-=0.0002
-        draw_string(str(VitesseCreaCarte),0,0)
+        if is_pressed("down") and vitesseCreaCarte>0:vitesseCreaCarte-=0.04
+        elif is_pressed("up"):vitesseCreaCarte+=0.012
+        elif vitesseCreaCarte>0.0001:vitesseCreaCarte-=0.0002
+        draw_string(str(vitesseCreaCarte),0,0)
         draw_string(str(DistanceCreaCarte),0,30)
-        DistanceCreaCarte+=VitesseCreaCarte/160
+        DistanceCreaCarte+=vitesseCreaCarte/160
         if is_pressed("o"):
           CreaCarteCarte.append(int(DistanceCreaCarte))
           print(DistanceCreaCarte)
@@ -308,7 +310,7 @@ while not is_pressed("backspace"):
           sleep(0.5)
           while not is_pressed("f"):pass
           sleep(1)
-        if VitesseCreaCarte<0:Vitesse=0
+        if vitesseCreaCarte<0:vitesse=0
       print(CreaCarteCarte)
       BLANC()
     elif Commande[0]=="R":
@@ -326,20 +328,20 @@ while not is_pressed("backspace"):
     elif Commande=="exec":exec(input("exec "))
     elif Commande=="TestPA0":
       PA=True
-      Vitesse=70
-      Limite=70
+      vitesse=70
+      limiteVitesse=70
       prochainArret[0]=10000
       prochainFeu[0]=10000
-      prochaineLimite=[400,40]
+      prochaineLimiteVitesse=[400,40]
     elif Commande=="TestPA1":
       PA=True
-      Vitesse=70
-      Limite=70
+      vitesse=70
+      limiteVitesse=70
       VACMA[4]=False
       prochainArret[0]=700
       prochainFeu[0]=10000
-      prochaineLimite[0]=10000
-  if Vitesse>0.1 and VACMA[4]:
+      prochaineLimiteVitesse[0]=10000
+  if vitesse>0.1 and VACMA[4]:
     if is_pressed("control"):
       VACMA[1]+=1
       VACMA[2]=0
@@ -358,9 +360,9 @@ while not is_pressed("backspace"):
     FU=True
     print("[VACMA] FU active, "+str(monotonic()))
   if VACMA[0] or DefautOP:fill_rect(0,0,20,20,'red')
-  else:fill_rect(0,0,20,20,BlancC)
-  if str(Vitesse)[0]=="-":Vitesse=0
-  if Vitesse>=71:
+  else:fill_rect(0,0,20,20,BLANCC)
+  if str(vitesse)[0]=="-":vitesse=0
+  if vitesse>=71:
     if not FU:print("FU active, vitesse > 70, "+str(monotonic()))
     FU=True
   if prochainArret[0]>=330:
@@ -370,10 +372,8 @@ while not is_pressed("backspace"):
     if prochainFeu[0]<185:
       if prochainFeu[1]:fill_rect(int((15+prochainFeu[0])*2.5),190,10,10,'red')
       else:fill_rect(int((15+prochainFeu[0])*2.5),190,10,10,'green')
-    if prochaineLimite[0]<330:draw_string(str(prochaineLimite[1]),int((15+prochaineLimite[0])*2.5),200)
+    if prochaineLimiteVitesse[0]<330:draw_string(str(prochaineLimiteVitesse[1]),int((15+prochaineLimiteVitesse[0])*2.5),200)
     if prochainArret[0]<515:
       fill_rect(int((prochainArret[0]-320)*2.5),217,300,10,'black')
       draw_string(prochainArret[2],int((prochainArret[0]-300)*2.5),198)
-  elif prochainArret[0]>322:fill_rect(0,180,320,40,BlancC)
-  if is_pressed("i"):i=0
-  Aleatoire=str(randrange(0,1000))
+  elif prochainArret[0]>322:fill_rect(0,180,320,40,BLANCC)
