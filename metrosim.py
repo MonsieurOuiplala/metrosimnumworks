@@ -39,6 +39,7 @@ limiteVitesse=30
 vitesse=0
 AEAU=[None,None,None,None,True]
 Routes=[]
+ouverturePortesDifferee=0
 gris=(245,245,245) # Couleur grisee, pour afficheurs
 
 def arriveeDistance(arriveeDistanceSimVitesse,arriveeDistanceDistance=0):
@@ -183,6 +184,8 @@ Defaut=""
 BienvenueAfficherMenu("Service","Train","Bienvenue")
 afficheurModeConduite=AfficheurModeConduite(262,126,262,151,False)
 while not is_pressed("backspace"):
+  if is_pressed("o"):ouverturePortesDifferee=200
+  else:ouverturePortesDifferee-=1
   vitesseAfficheur.raffraichir()
   if prochainFeu[1]:
     fill_rect(10,30,10,20,'red')
@@ -217,7 +220,7 @@ while not is_pressed("backspace"):
   else:fill_rect(260,30,28,21,BLANCC)
   prochainArretDistanceAfficheur.ecrire(str(int(prochainArret[0])))
   prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
-  if is_pressed("o") and prochainArret[0]<20 and vitesse<0.01:
+  if (ouverturePortesDifferee>0 or is_pressed("o")) and prochainArret[0]<20 and vitesse<0.01:
     Porte('green')
     sleep(2)
     while not is_pressed("f"):
@@ -236,8 +239,8 @@ while not is_pressed("backspace"):
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
     prochainArret=[randrange(900,1600),faibleChance(),""]
-  if (is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arriveeDistance(vitesse))>=308 or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus or prochainFeu[1]):vitesse-=vitesseMoins
-  elif is_pressed("up") or PA:
+  if not FU and((is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arriveeDistance(vitesse))>=308 or prochainFeu[1] or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus)):vitesse-=vitesseMoins
+  elif not FU and(is_pressed("up") or PA):
     if not DefautOP or (PA and vitesse)<=limiteVitesse:vitesse+=vitessePlus
     elif (PA==False and Defaut!="PE") or (Defaut!="PE" and (PA and vitesse<=limiteVitesse-1)):vitesse+=vitessePlus
   elif vitesse>0.0001 and not PA:vitesse-=0.0002
@@ -266,8 +269,7 @@ while not is_pressed("backspace"):
   if is_pressed("echap"):
     if not FU and not is_pressed("echap"):print("FU active manuellement, "+str(monotonic()))
     FU=True
-  if FU and vitesse>0.0845+vitesseMoins:vitesse-=0.0846
-  elif FU:vitesse-=0.01
+  if FU:vitesse-=(vitesseMoins*1.4)
   if FU:draw_string("FU",152,80,'black')
   elif FU=="i":draw_string("VACMA",188,25,'blue')
   else:draw_string("FU",152,80,(245,245,245))
