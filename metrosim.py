@@ -42,12 +42,13 @@ Routes=[]
 ouverturePortesDifferee=0
 gris=(245,245,245) # Couleur grisee, pour afficheurs
 
-def arriveeDistance(arriveeDistanceSimVitesse,arriveeDistanceDistance=0):
-   for AffichageArriveeIteration in range(int(arriveeDistanceSimVitesse)):
-   	arriveeDistanceSimVitesse-=vitesseMoins
-   	arriveeDistanceDistance+=arriveeDistanceSimVitesse/24
-   return arriveeDistanceDistance
+def arretDistance(arretDistanceSimVitesse,arretDistanceDistance=0):
+   for AffichageArriveeIteration in range(int(arretDistanceSimVitesse)):
+   	arretDistanceSimVitesse-=vitesseMoins
+   	arretDistanceDistance+=arretDistanceSimVitesse/24
+   return arretDistanceDistance
    
+# Peut etre utilise pour simuler du trafic, plus la probabilite d'obtenir True est elevee plus il y aura de DSO, signaux fermes...
 def faibleChance():return choice([False,False,False,False,False,False,False,False,False,False,False,True])
 
 def demarrerService():
@@ -168,7 +169,7 @@ limiteVitesseAfficheur=Afficheur(75,30)
 prochaineLimiteVitesseAfficheur=Afficheur(75,55,str(prochaineLimiteVitesse[1]))
 prochaineLimiteVitesseDistanceAfficheur=Afficheur(75,80,str(int(prochaineLimiteVitesse[0])))
 def raffraichirProchaineLimiteVitesse():
-	if prochaineLimiteVitesse[1]>limiteVitesse:prochaineLimiteVitesseAfficheur.changerCouleur("red")
+	if prochaineLimiteVitesse[1]<limiteVitesse:prochaineLimiteVitesseAfficheur.changerCouleur("red")
 	else:prochaineLimiteVitesseAfficheur.changerCouleur("green")
 	
 prochainFeuDistanceAfficheur=Afficheur(10,60,str(int(prochainFeu[0])))
@@ -239,7 +240,7 @@ while not is_pressed("backspace"):
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
     prochainArret=[randrange(900,1600),faibleChance(),""]
-  if not FU and((is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arriveeDistance(vitesse))>=308 or prochainFeu[1] or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus)):vitesse-=vitesseMoins
+  if not FU and((is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arretDistance(vitesse))>=308 or (prochainFeu[1] and prochainFeu[0]-arretDistance(vitesse)<8) or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus)):vitesse-=vitesseMoins
   elif not FU and(is_pressed("up") or PA):
     if not DefautOP or (PA and vitesse)<=limiteVitesse:vitesse+=vitessePlus
     elif (PA==False and Defaut!="PE") or (Defaut!="PE" and (PA and vitesse<=limiteVitesse-1)):vitesse+=vitessePlus
@@ -287,7 +288,7 @@ while not is_pressed("backspace"):
   if prochainArret[0]<321:
     fill_rect(0,180,320,40,'white')
     fill_rect(0,190,int(320-prochainArret[0]),30,'blue')
-    fill_rect(int(320-prochainArret[0])+int(arriveeDistance(vitesse)),190,4,30,'orange')
+    fill_rect(int(320-prochainArret[0])+int(arretDistance(vitesse)),190,4,30,'orange')
     fill_rect(302,220,19,2,'green')
     fill_rect(0,220,302,2,'red')
   if is_pressed("a") and is_pressed("d"):
