@@ -25,7 +25,7 @@ Agent="---" # Identifiant agent
 
 print("Bienvenue sur Metro Simulator Numworks !")
 sleep(1)
-NomsArrets=["Abbesses","Adrienne Bolland","Aeroport d'Orly"] # Rentrer plus de stations prendrait trop de place, la Numworks a un espace de stockage tres limite
+NomsArrets=["Abbesses","Adrienne Bolland","Aeroport d'Orly"]
 FU=False
 #[Distance,DSO?,Nom]
 prochainArret=[5,False,"Sortie du garage"]
@@ -40,7 +40,7 @@ vitesse=0
 AEAU=[None,None,None,None,True]
 Routes=[]
 ouverturePortesDifferee=0
-gris=(245,245,245) # Couleur grisee, pour afficheurs
+GRIS=(245,245,245) # Couleur grisee, pour afficheurs
 
 def arretDistance(arretDistanceSimVitesse,arretDistanceDistance=0):
    for AffichageArriveeIteration in range(int(arretDistanceSimVitesse)):
@@ -97,16 +97,16 @@ class AfficheurModeConduite():
 		self.PA=Afficheur(afficheurPAX,afficheurPAY,"PA",)
 		self.CM=Afficheur(afficheurCMX,afficheurCMY,"CM")
 		self.mode=modeInitial
-		if self.mode:self.CM.changerCouleur(gris)
-		else:self.PA.changerCouleur(gris)
+		if self.mode:self.CM.changerCouleur(GRIS)
+		else:self.PA.changerCouleur(GRIS)
 	def afficheurChangerMode(self,afficheurNouveauMode): # Ne change que l'afficheur, pas le mode reel
-		if afficheurNouveauMode: # Si le mode de conduit voulu est le PA
+		if afficheurNouveauMode: # Si le mode de conduite voulu est le PA
 			self.mode=True # Changer en PA
 			self.PA.changerCouleur("black")
-			self.CM.changerCouleur(gris)
+			self.CM.changerCouleur(GRIS)
 		else: # Si le mode de conduite voulu est la CM
 			self.mode=False # Changer en CM
-			self.PA.changerCouleur(gris)
+			self.PA.changerCouleur(GRIS)
 			self.CM.changerCouleur("black")
 	def afficheurRaffraichir(self): # Raffraichir l'affichage du mode de conduite, notamment apres un arrêt en station
 		self.PA.ecrire()
@@ -184,9 +184,8 @@ PA=False
 Defaut=""
 BienvenueAfficherMenu("Service","Train","Bienvenue")
 afficheurModeConduite=AfficheurModeConduite(262,126,262,151,False)
+fill_rect(0,180,320,40,'white')
 while not is_pressed("backspace"):
-  if is_pressed("o"):ouverturePortesDifferee=200
-  else:ouverturePortesDifferee-=1
   vitesseAfficheur.raffraichir()
   if prochainFeu[1]:
     fill_rect(10,30,10,20,'red')
@@ -210,6 +209,8 @@ while not is_pressed("backspace"):
   prochaineLimiteVitesseAfficheur.ecrire(str(prochaineLimiteVitesse[1]))
   prochaineLimiteVitesseDistanceAfficheur.ecrire(str(int(prochaineLimiteVitesse[0])))
   if prochainArret[0]<100:
+    if is_pressed("o"):ouverturePortesDifferee=200
+    else:ouverturePortesDifferee-=1
     if prochainArret[1]:
       fill_rect(270,30,8,8,'white')
       fill_rect(260,43,8,8,'white')
@@ -221,11 +222,11 @@ while not is_pressed("backspace"):
   else:fill_rect(260,30,28,21,BLANCC)
   prochainArretDistanceAfficheur.ecrire(str(int(prochainArret[0])))
   prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
-  if (ouverturePortesDifferee>0 or is_pressed("o")) and prochainArret[0]<20 and vitesse<0.01:
+  if ouverturePortesDifferee>0 and prochainArret[0]<20 and vitesse<0.01:
     Porte('green')
     sleep(2)
     while not is_pressed("f"):
-      if prochainArret[1] and randrange(0,20000)==0:
+      if prochainArret[1] and randrange(0,80000)==0:
         fill_rect(270,30,8,8,'black')
         fill_rect(260,43,8,8,'black')
         fill_rect(280,43,8,8,'black')
@@ -286,9 +287,12 @@ while not is_pressed("backspace"):
   else:draw_string("Defaut",185,10,(245,245,245))
   if FU and is_pressed("echap") and is_pressed("enter"):FU=False
   if prochainArret[0]<321:
-    fill_rect(0,180,320,40,'white')
+    prochainArretDistance=arretDistance(vitesse)
+    if prochainArret[0]>320:fill_rect(0,180,320,40,'white')
     fill_rect(0,190,int(320-prochainArret[0]),30,'blue')
-    fill_rect(int(320-prochainArret[0])+int(arretDistance(vitesse)),190,4,30,'orange')
+    if vitesse>8:fill_rect(int(320-prochainArret[0])+int(prochainArretDistance)-4,190,4,30,'white')
+    fill_rect(int(320-prochainArret[0])+int(prochainArretDistance)+6,190,2,30,'white')
+    fill_rect(int(320-prochainArret[0])+int(prochainArretDistance),190,4,30,'orange')
     fill_rect(302,220,19,2,'green')
     fill_rect(0,220,302,2,'red')
   if is_pressed("a") and is_pressed("d"):
@@ -341,7 +345,7 @@ while not is_pressed("backspace"):
       vitesse=70
       limiteVitesse=70
       VACMA[4]=False
-      prochainArret[0]=700
+      prochainArret[0]=400
       prochainFeu[0]=10000
       prochaineLimiteVitesse[0]=10000
   if vitesse>0.1 and VACMA[4]:
