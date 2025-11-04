@@ -3,7 +3,7 @@ try:from keyboard import *
 except Exception:
 	from ion import *
 	def is_pressed(touche):
-		touches={"v":"KEY_ONE","b":"KEY_TWO","n":"KEY_THREE","g":"KEY_FOUR","a":"KEY_EXP","up":"KEY_UP","down":"KEY_DOWN","p":"KEY_LEFTPARENTHESIS","c":"KEY_LOG","m":"KEY_SEVEN","o":"KEY_FIVE","f":"KEY_FIVE","echap":"KEY_SHIFT","enter":"KEY_EXE","d":"KEY_IMAGINARY","control":"KEY_ALPHA","backspace":"KEY_BACKSPACE","i":"KEY_TANGENT"}
+		touches={"v":"KEY_ONE","b":"KEY_TWO","n":"KEY_THREE","g":"KEY_FOUR","a":"KEY_EXP","up":"KEY_UP","down":"KEY_DOWN","p":"KEY_LEFTPARENTHESIS","c":"KEY_LOG","m":"KEY_SEVEN","o":"KEY_FIVE","f":"KEY_FIVE","esc":"KEY_SHIFT","enter":"KEY_EXE","d":"KEY_IMAGINARY","control":"KEY_ALPHA","backspace":"KEY_BACKSPACE","i":"KEY_TANGENT"}
 		if touche in touches:return keydown(eval(touches[touche]))
 from time import *
 from kandinsky import *
@@ -11,8 +11,6 @@ from random import *
 def BLANC():fill_rect(0,0,320,222,BLANCC)
 BLANCC=(240,240,240)
 VACMA=[False,0,0,0,True]
-
-# Coordonnees espace restant : x40,y5
 
 #---
 # Personnaliser l'experience de conduite :
@@ -73,20 +71,22 @@ def bienvenueMenuBA():bienvenueMenu(["VACMA",BienvenueMenuSecurites("VACMA"),"AE
 def bienvenueMenuC():bienvenueMenu(["MSN v"+str(version),rien,"Technicentre",rien,"",rien])
 
 class Afficheur():
-	def __init__(self,afficheurX,afficheurY,afficheurTexteInitial="00",afficheurCouleurInitiale="black"):
+	def __init__(self,afficheurX,afficheurY,afficheurTexteInitial="00",afficheurCouleurInitiale="black",afficheurCouleurFondInitiale=(248,252,248)):
 		self.x=afficheurX
 		self.y=afficheurY
 		self.texte=afficheurTexteInitial
 		self.longueur=len(str(self.texte))
 		self.couleur=afficheurCouleurInitiale
+		self.couleurFond=afficheurCouleurFondInitiale
 		self.ecrire(self.texte)
-	def ecrire(self,afficheurTexte=None,nettoyer=True,nettoyerCouleur=BLANCC,ecrireCouleur=None):
+	def ecrire(self,afficheurTexte=None,nettoyer=True,nettoyerCouleur=BLANCC,ecrireCouleur=None,ecrireCouleurFond=None):
 		if ecrireCouleur!=None:self.couleur=ecrireCouleur
+		if ecrireCouleurFond!=None:self.couleurFond=ecrireCouleurFond
 		if nettoyer and afficheurTexte!=None and self.longueur>len(afficheurTexte):self.nettoyer(nettoyerCouleur=nettoyerCouleur)
 		if afficheurTexte!=None:
 			self.texte=afficheurTexte
 			self.longueur=len(self.texte)
-		draw_string(self.texte,self.x,self.y,self.couleur)
+		draw_string(self.texte,self.x,self.y,self.couleur,self.couleurFond)
 	def changerCouleur(self,afficheurCouleur):
 		self.couleur=afficheurCouleur
 		self.ecrire()
@@ -165,9 +165,28 @@ def PauseVoyant():
   fill_rect(9,0,6,15,'red')
 def DepauseVoyant():fill_rect(0,0,15,15,BLANCC)
 
-limiteVitesseAfficheur=Afficheur(75,30)
-prochaineLimiteVitesseAfficheur=Afficheur(75,55,str(prochaineLimiteVitesse[1]))
-prochaineLimiteVitesseDistanceAfficheur=Afficheur(75,80,str(int(prochaineLimiteVitesse[0])))
+# Ecran Octys VB2
+limiteVitesseAfficheur=Afficheur(80,30,afficheurCouleurInitiale="green",afficheurCouleurFondInitiale="blue")
+couleurFondVB2=(230,230,230)
+def initialiserAffichageVB2():
+	fill_rect(limiteVitesseAfficheur.x-35,limiteVitesseAfficheur.y-15,90,80,couleurFondVB2)
+	fill_rect(limiteVitesseAfficheur.x-33,limiteVitesseAfficheur.y-13,86,76,"blue")
+	fill_rect(limiteVitesseAfficheur.x-32,limiteVitesseAfficheur.y-12,84,74,couleurFondVB2)
+	fill_rect(limiteVitesseAfficheur.x-5,limiteVitesseAfficheur.y-5,30,28,"green")
+	fill_rect(limiteVitesseAfficheur.x-28,limiteVitesseAfficheur.y+28,76,10,"black")
+	raffraichirVB2("00",0)
+	raffraichirPortesVB2("green")
+def raffraichirVB2(limiteAfficher,vitesseAfficher):
+	limiteVitesseAfficheur.ecrire(limiteAfficher)
+	vitesseAfficher=int(vitesseAfficher)
+	fill_rect(limiteVitesseAfficheur.x-26,limiteVitesseAfficheur.y+30,int(0.9*vitesseAfficher),6,"green")
+	fill_rect(limiteVitesseAfficheur.x-26+int(0.9*vitesseAfficher),limiteVitesseAfficheur.y+30,72-int(0.9*vitesseAfficher),6,couleurFondVB2)
+def raffraichirPortesVB2(couleur):
+	fill_rect(limiteVitesseAfficheur.x+32,limiteVitesseAfficheur.y+42,20,20,couleur)
+	draw_string("D",limiteVitesseAfficheur.x+37,limiteVitesseAfficheur.y+43,"black",couleur)
+	
+prochaineLimiteVitesseAfficheur=Afficheur(200,50,str(prochaineLimiteVitesse[1]))
+prochaineLimiteVitesseDistanceAfficheur=Afficheur(200,75,str(int(prochaineLimiteVitesse[0])))
 def raffraichirProchaineLimiteVitesse():
 	if prochaineLimiteVitesse[1]<limiteVitesse:prochaineLimiteVitesseAfficheur.changerCouleur("red")
 	else:prochaineLimiteVitesseAfficheur.changerCouleur("green")
@@ -185,6 +204,7 @@ Defaut=""
 BienvenueAfficherMenu("Service","Train","Bienvenue")
 afficheurModeConduite=AfficheurModeConduite(262,126,262,151,False)
 fill_rect(0,180,320,40,'white')
+initialiserAffichageVB2()
 while not is_pressed("backspace"):
   vitesseAfficheur.raffraichir()
   if prochainFeu[1]:
@@ -193,7 +213,7 @@ while not is_pressed("backspace"):
   else:
     fill_rect(10,30,10,20,'white')
     fill_rect(20,30,10,20,'green')
-  limiteVitesseAfficheur.ecrire(str(limiteVitesse)) 
+  raffraichirVB2(str(limiteVitesse),vitesse)
   if is_pressed(toucheBienvenueMenuA) or is_pressed(toucheBienvenueMenuB) or is_pressed(toucheBienvenueMenuC):bienvenueMenu0()
   if is_pressed("a") and is_pressed("p"):    
     if not PA:print("PA active, "+str(monotonic()))
@@ -224,6 +244,7 @@ while not is_pressed("backspace"):
   prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
   if ouverturePortesDifferee>0 and prochainArret[0]<20 and vitesse<0.01:
     Porte('green')
+    raffraichirPortesVB2("yellow")
     sleep(2)
     while not is_pressed("f"):
       if prochainArret[1] and randrange(0,80000)==0:
@@ -241,6 +262,7 @@ while not is_pressed("backspace"):
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
     prochainArret=[randrange(900,1600),faibleChance(),""]
+    initialiserAffichageVB2()
   if not FU and((is_pressed("down") and vitesse>0) or PA and (int(320-prochainArret[0])+int(arretDistance(vitesse))>=308 or (prochainFeu[1] and prochainFeu[0]-arretDistance(vitesse)<8) or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1]))) or vitesse>limiteVitesse+2*vitessePlus)):vitesse-=vitesseMoins
   elif not FU and(is_pressed("up") or PA):
     if not DefautOP or (PA and vitesse)<=limiteVitesse:vitesse+=vitessePlus
@@ -268,8 +290,8 @@ while not is_pressed("backspace"):
   elif DefautOP and randrange(0,101)==0:DefautOP=False
   if prochainFeu[1] and randrange(0,1000)==0:prochainFeu[1]=False
   if prochainArret[0]<500 and prochainArret[0]>480:fill_rect(260,90,30,30,'red')
-  if is_pressed("echap"):
-    if not FU and not is_pressed("echap"):print("FU active manuellement, "+str(monotonic()))
+  if is_pressed("esc"):
+    if not FU and not is_pressed("esc"):print("FU active manuellement, "+str(monotonic()))
     FU=True
   if FU:vitesse-=(vitesseMoins*1.4)
   if FU:draw_string("FU",152,80,'black')
@@ -285,7 +307,7 @@ while not is_pressed("backspace"):
   if DefautOP:draw_string("Defaut",185,10,'orange')
   elif DefautOP=="i":draw_string("VACMA",188,25,'blue')
   else:draw_string("Defaut",185,10,(245,245,245))
-  if FU and is_pressed("echap") and is_pressed("enter"):FU=False
+  if FU and is_pressed("esc") and is_pressed("enter"):FU=False
   if prochainArret[0]<321:
     prochainArretDistance=arretDistance(vitesse)
     if prochainArret[0]>320:fill_rect(0,180,320,40,'white')
