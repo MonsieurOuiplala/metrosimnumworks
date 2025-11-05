@@ -1,4 +1,4 @@
-version=0.5
+version=0.6
 try:from keyboard import *
 except Exception:
 	from ion import *
