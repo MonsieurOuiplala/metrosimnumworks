@@ -1,4 +1,4 @@
-version=0.7
+version=0.8
 try:from keyboard import *
 except Exception:
 	from ion import *
@@ -34,7 +34,7 @@ prochainFeu=[10,False]
 #[Distance,Limite]
 prochaineLimiteVitesse=[10,50]
 DefautOP=False
-def Porte(PorteCouleur):fill_rect(155,50,10,10,PorteCouleur)
+def PorteCarre(PorteCouleur):fill_rect(155,50,10,10,PorteCouleur)
 limiteVitesse=30
 vitesse=0
 AEAU=[None,None,None,None,True]
@@ -100,6 +100,29 @@ class AfficheurVitesse():
 		elif int(vitesse)==limiteVitesse:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="yellow")
 		else:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="red")
 		
+portesX=30 # Coordonnées derniere porte
+portesY=195
+portesCouleurInterieur="white"
+portesCouleurExterieur="blue"
+def porteOuvrir(deplacement,ouverture):
+	fill_rect(portesX+deplacement-int(ouverture/2),portesY,int(ouverture),20,portesCouleurInterieur)
+def portesOuvrir():
+	ouverture=0
+	for i in range(1100):
+		ouverture+=0.02
+		for j in range(0,241,40):porteOuvrir(j,ouverture)
+def porteAvertisseur(deplacement):fill_rect(portesX+deplacement-3,portesY,6,6,"red")
+def portesAvertisseur():
+	for i in range(0,241,40):porteAvertisseur(i)
+def porteFermer(deplacement,fermeture):
+	fill_rect(portesX+deplacement-11,portesY,int(fermeture/2),20,portesCouleurExterieur)
+	fill_rect(portesX+deplacement+11-int(fermeture/2),portesY,11,20,portesCouleurExterieur)
+def portesFermer():
+	fermeture=0
+	for i in range(600):
+		fermeture+=0.04
+		for j in range(0,241,40):porteFermer(j,fermeture)
+		
 def PauseVoyant():
   fill_rect(0,0,6,15,'red')
   fill_rect(9,0,6,15,'red')
@@ -155,7 +178,7 @@ fuAfficheur=Afficheur(200,50,afficheurCouleurInitiale=GRIS,afficheurTexteInitial
 vacmaAfficheur=Afficheur(188,25,afficheurTexteInitial="VACMA")
 defautAfficheur=Afficheur(185,10,afficheurTexteInitial="Defaut")
 
-Porte('red')
+PorteCarre('red')
 BLANC()
 PA=False
 Defaut=""
@@ -200,17 +223,21 @@ while not is_pressed("backspace"):
   prochainArretDistanceAfficheur.ecrire(str(int(prochainArret[0])))
   prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
   if ouverturePortesDifferee>0 and prochainArret[0]<20 and vitesse<0.01:
-    Porte('green')
+    PorteCarre('green')
     raffraichirPortesVB2("yellow")
-    sleep(2)
+    sleep(0.5)
+    portesOuvrir()
     while not is_pressed("f"):
       if prochainArret[1] and randrange(0,80000)==0:
         fill_rect(270,30,8,8,'black')
         fill_rect(260,43,8,8,'black')
         fill_rect(280,43,8,8,'black')
-    Porte('yellow')
-    sleep(5)
-    Porte('red')
+    PorteCarre('yellow')
+    portesAvertisseur()
+    sleep(2)
+    portesFermer()
+    sleep(1)
+    PorteCarre('red')
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
     prochainArret=[randrange(900,1600),faibleChance(),""]
@@ -245,7 +272,7 @@ while not is_pressed("backspace"):
     limiteVitesse=prochaineLimiteVitesse[1]
     prochaineLimiteVitesse[1]=choice([40,50,60,70])
     prochaineLimiteVitesse[0]=randrange(500,800+([40,50,60,70].index(prochaineLimiteVitesse[1])*prochaineLimiteVitesse[1]))
-  Porte('red')
+  PorteCarre('red')
   if not DefautOP and randrange(0,6001)==0:
     DefautOP=True
     #Panne Electrique
@@ -305,7 +332,7 @@ while not is_pressed("backspace"):
     if not FU:print("FU active, vitesse > 70, "+str(monotonic()))
     FU=True
   if prochainArret[0]>=330:
-    fill_rect(0,180,320,40,'white')
+    fill_rect(20,180,320,40,'white')
     fill_rect(0,190,20,30,'blue')
     fill_rect(0,220,320,2,'red')
     if prochainFeu[0]<185:
