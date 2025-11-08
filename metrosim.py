@@ -1,4 +1,4 @@
-version=0.8
+version=0.9
 try:from keyboard import *
 except Exception:
 	from ion import *
@@ -240,8 +240,7 @@ while not is_pressed("backspace"):
     PorteCarre('red')
     afficheurModeConduite.afficheurRaffraichir()
     print("Station, "+str(monotonic()))
-    prochainArret=[randrange(900,1600),faibleChance(),""]
-    initialiserAffichageVB2()
+    prochainArret[0]=-1
   if is_pressed("up") or is_pressed("down") or is_pressed("left") or is_pressed("right"):
   	if is_pressed("up") and int(cranManipulateur)<1:cranManipulateur+=0.1
   	elif is_pressed("down") and cranManipulateur>-1:cranManipulateur-=0.1
@@ -262,12 +261,17 @@ while not is_pressed("backspace"):
   prochainArret[0]-=vitesse/155
   prochainFeu[0]-=vitesse/155
   prochaineLimiteVitesse[0]-=vitesse/155
-  if prochainArret[0]<0:prochainArret=[randrange(900,1600),faibleChance(),""]
+  if prochainArret[0]<0:
+  	prochainArret=[randrange(900,1600),faibleChance(),""]
+  	initialiserAffichageVB2()
+  	fill_rect(20,180,320,40,'white')
   if prochainFeu[0]<0:
     if prochainFeu[1] and AEAU[4]:
       FU=True
       print("[AEAU] FU active, "+str(monotonic()))
-    prochainFeu=[randrange(330,500),faibleChance()]
+    if prochainArret[0]<580 and prochainArret[0]>500:prochainFeu=[prochainArret[0]-340,faibleChance()]
+    elif prochainArret[0]<=550:prochainFeu=[prochainArret[0]+10,faibleChance()]
+    else:prochainFeu=[randrange(150,250),faibleChance()]
   if prochaineLimiteVitesse[0]<0:
     limiteVitesse=prochaineLimiteVitesse[1]
     prochaineLimiteVitesse[1]=choice([40,50,60,70])
@@ -295,7 +299,7 @@ while not is_pressed("backspace"):
   if DefautOP:defautAfficheur.changerCouleur("orange")
   else:defautAfficheur.changerCouleur(GRIS)
   if FU and is_pressed("esc") and is_pressed("enter"):FU=False
-  if prochainArret[0]<321:
+  if prochainArret[0]<330:
     prochainArretDistance=arretDistance(vitesse)
     if prochainArret[0]>320:fill_rect(0,180,320,40,'white')
     fill_rect(0,190,int(320-prochainArret[0]),30,'blue')
@@ -332,14 +336,20 @@ while not is_pressed("backspace"):
     if not FU:print("FU active, vitesse > 70, "+str(monotonic()))
     FU=True
   if prochainArret[0]>=330:
-    fill_rect(20,180,320,40,'white')
+    #fill_rect(20,180,320,40,'white')
     fill_rect(0,190,20,30,'blue')
     fill_rect(0,220,320,2,'red')
-    if prochainFeu[0]<185:
-      if prochainFeu[1]:fill_rect(int((15+prochainFeu[0])*2.5),190,10,10,'red')
-      else:fill_rect(int((15+prochainFeu[0])*2.5),190,10,10,'green')
-    if prochaineLimiteVitesse[0]<330:draw_string(str(prochaineLimiteVitesse[1]),int((15+prochaineLimiteVitesse[0])*2.5),200)
+    if prochainFeu[0]<130:
+      if prochainFeu[1]:fill_rect(int((8+prochainFeu[0])*2.5),190,10,10,'red')
+      else:fill_rect(int((8+prochainFeu[0])*2.5),190,10,10,'green')
+      fill_rect(10+int((8+prochainFeu[0])*2.5),190,10,10,"white") # Effacer les anciens signaux
+    else:fill_rect(20,190,10,10,"white")
+    if prochaineLimiteVitesse[0]<330:
+    	draw_string(str(prochaineLimiteVitesse[1]),int((8+prochaineLimiteVitesse[0])*2.5),200)
+    	fill_rect(20+int((8+prochaineLimiteVitesse[0])*2.5),200,20,18,"white") # Effacer les anciens TIV
+    else:fill_rect(20,200,20,18,"white")
     if prochainArret[0]<515:
       fill_rect(int((prochainArret[0]-320)*2.5),217,300,10,'black')
       draw_string(prochainArret[2],int((prochainArret[0]-300)*2.5),198)
+    fill_rect(0,190,20,30,'blue')
   elif prochainArret[0]>322:fill_rect(0,180,320,40,BLANCC)
