@@ -1,4 +1,4 @@
-version=0.9
+version=1.0
 try:from keyboard import *
 except Exception:
 	from ion import *
@@ -23,14 +23,11 @@ Agent="---" # Identifiant agent
 #VACMA[4]=False # Enlever le premier croisillon (#) pour desactiver la VACMA
 #---
 
-print("Bienvenue sur Metro Simulator Numworks !")
-sleep(1)
-NomsArrets=["Abbesses","Adrienne Bolland","Aeroport d'Orly"]
+print("Bienvenue sur Métro Simulator Numworks !")
+NomsArrets=["Abbesses","Adrienne Bolland","Aeroport d'Orly"] # Rajoutez-en ici
 FU=False
 #[Distance,DSO?,Nom]
-prochainArret=[5,False,"Sortie du garage"]
-#[Distance,Rouge?]
-prochainFeu=[10,False]
+prochainArret=[5,False,"Sortie de tiroir"]
 #[Distance,Limite]
 prochaineLimiteVitesse=[10,50]
 DefautOP=False
@@ -49,8 +46,9 @@ def arretDistance(arretDistanceSimVitesse,arretDistanceDistance=0):
    
 # Peut etre utilise pour simuler du trafic, plus la probabilite d'obtenir True est elevee plus il y aura de DSO, signaux fermes...
 def faibleChance():return choice([False,False,False,False,False,False,False,False,False,False,False,True])
+def chance():return choice([False,False,False,False,False,False,False,True])
 
-class Afficheur():
+class Afficheur:
 	def __init__(self,afficheurX,afficheurY,afficheurTexteInitial="00",afficheurCouleurInitiale="black",afficheurCouleurFondInitiale=(248,252,248)):
 		self.x=afficheurX
 		self.y=afficheurY
@@ -72,7 +70,7 @@ class Afficheur():
 		self.ecrire()
 	def nettoyer(self,nettoyerCommencement=0,nettoyerCouleur=BLANCC):fill_rect(self.x+nettoyerCommencement*10,self.y,self.longueur*10,18,BLANCC) # Caractere draw_string prend 10*18
 
-class AfficheurModeConduite():
+class AfficheurModeConduite:
 	def __init__(self,afficheurPAX,afficheurPAY,afficheurCMX,afficheurCMY,modeInitial=False): # Pour le mode, True est le PA et False la CM
 		self.PA=Afficheur(afficheurPAX,afficheurPAY,"PA",)
 		self.CM=Afficheur(afficheurCMX,afficheurCMY,"CM")
@@ -92,14 +90,75 @@ class AfficheurModeConduite():
 		self.PA.ecrire()
 		self.CM.ecrire()
 		
-class AfficheurVitesse():
+class AfficheurVitesse:
 	def __init__(self,afficheurX,afficheurY):self.afficheur=Afficheur(afficheurX,afficheurY)
 	def raffraichir(self):
 		vitesseEcrire=str(int(vitesse))
 		if vitesse<limiteVitesse:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="black")
 		elif int(vitesse)==limiteVitesse:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="yellow")
 		else:self.afficheur.ecrire(vitesseEcrire,ecrireCouleur="red")
-		
+
+def effacerPremierSignal():
+	fill_rect(20,182,20,18,"white")
+	fill_rect(19,182,1,8,"white")
+
+class Signal:
+	def __init__(self,position,nom,etat,signalRepete=None): # Pour l'état, 1 : rouge, 3 : orange, R : répéteur, dans ce cas il faut aussi donner l'objet Signal dans signalRepete.
+		if etat==True:etat=1
+		elif not etat:etat=3
+		self.position=position
+		self.nom=nom
+		self.etat=etat
+		self.distance=0
+		self.couleur="blue"
+		if signalRepete!=None:self.signalRepete=signalRepete
+	def calculerDistance(self,distanceStation):return distanceStation-self.position
+	def calculerCouleur(self):
+		if self.etat=="R":return {1:"yellow",3:"green"}[self.signalRepete.etat] # Répéteur : jaune si rouge, vert si vert
+		else:return {1:"red",3:"green"}[self.etat] # Signal d'espacement intermédiaire
+class Station:
+	def __init__(self,nom,dso,distance):
+		self.nom=nom
+		self.dso=dso
+		self.distance=distance
+		self.arretComplete=False
+class Interstation:
+	def __init__(self,distanceStation=randrange(900,1600)):
+		self.station=Station(choice(NomsArrets),choice([faibleChance(),faibleChance()]),distanceStation)
+		self.signaux=[]
+		try:
+			nombreSignaux=int(self.station.distance*0.003)
+			espacementIntermediaire=int((self.station.distance-350)/nombreSignaux)
+		except ZeroDivisionError:
+			nombreSignaux=0
+			espacementIntermediaire=0
+		espacementIntermediaireRepeteur=int(espacementIntermediaire/2)
+		distance=int(350+espacementIntermediaire*nombreSignaux)
+		intermediaire=0
+		for i in range(nombreSignaux-1):
+			distance-=randrange(espacementIntermediaire-20,espacementIntermediaire+20)
+			intermediaire+=1
+			nouveauSignal=Signal(distance,"I"+str(intermediaire),faibleChance())
+			if randrange(0,4)==0:self.signaux.append(Signal(distance+randrange(espacementIntermediaireRepeteur-20,espacementIntermediaireRepeteur+20),"R","R",nouveauSignal)) # Signal accompagné d'un répéteur
+			self.signaux.append(nouveauSignal)
+		self.signaux.append(Signal(335,"E",faibleChance()))
+		self.signaux.append(Signal(0," ",False))
+	def raffraichirSignaux(self):
+		for signal in self.signaux:
+			signal.distance=signal.calculerDistance(self.station.distance)
+			signal.couleur=signal.calculerCouleur()
+			if signal.distance>130 and signal!=self.signaux[0]:
+				break
+			if self.station.distance>=130:
+				draw_string(signal.nom,int((8+signal.distance)*2.5),182,"black",signal.couleur)
+				fill_rect((len(signal.nom)*10)+int((8+signal.distance)*2.5),182,18,20,"white") # Effacer les anciens signaux
+			if signal.distance<0:
+				del self.signaux[0]
+				del signal
+				effacerPremierSignal()
+				break
+			if signal.etat==1 and chance() and faibleChance() and faibleChance():signal.etat=3
+				
 portesX=30 # Coordonnées derniere porte
 portesY=195
 portesCouleurInterieur="white"
@@ -122,11 +181,6 @@ def portesFermer():
 	for i in range(600):
 		fermeture+=0.04
 		for j in range(0,241,40):porteFermer(j,fermeture)
-		
-def PauseVoyant():
-  fill_rect(0,0,6,15,'red')
-  fill_rect(9,0,6,15,'red')
-def DepauseVoyant():fill_rect(0,0,15,15,BLANCC)
 
 cranManipulateur=0 # Cran du manipulateur : multiplicateur de traction/freinage minimum -1 (freinage), maximum 1 (traction)
 xManipulateur=210
@@ -164,19 +218,11 @@ def raffraichirPortesVB2(couleur):
 	fill_rect(limiteVitesseAfficheur.x+32,limiteVitesseAfficheur.y+42,20,20,couleur)
 	draw_string("D",limiteVitesseAfficheur.x+37,limiteVitesseAfficheur.y+43,"black",couleur)
 	
-prochaineLimiteVitesseAfficheur=Afficheur(110,50,str(prochaineLimiteVitesse[1]))
-prochaineLimiteVitesseDistanceAfficheur=Afficheur(110,25,str(int(prochaineLimiteVitesse[0])))
 def raffraichirProchaineLimiteVitesse():
 	if prochaineLimiteVitesse[1]<limiteVitesse:prochaineLimiteVitesseAfficheur.changerCouleur("red")
 	else:prochaineLimiteVitesseAfficheur.changerCouleur("green")
-	
-prochainFeuDistanceAfficheur=Afficheur(10,50,str(int(prochainFeu[0])))
-prochainArretDistanceAfficheur=Afficheur(260,60,str(int(prochainArret[0])))
 
-vitesseAfficheur=AfficheurVitesse(155,20)
-fuAfficheur=Afficheur(200,50,afficheurCouleurInitiale=GRIS,afficheurTexteInitial="FU")
-vacmaAfficheur=Afficheur(188,25,afficheurTexteInitial="VACMA")
-defautAfficheur=Afficheur(185,10,afficheurTexteInitial="Defaut")
+interstation=Interstation(10)
 
 PorteCarre('red')
 BLANC()
@@ -186,29 +232,36 @@ afficheurModeConduite=AfficheurModeConduite(60,25,60,50,False)
 fill_rect(0,180,320,40,'white')
 initialiserAffichageVB2()
 raffraichirManipulateur(cranManipulateur)
+
+prochainSignalDistanceAfficheur=Afficheur(15,50,str(int(interstation.signaux[0].distance)))
+prochainSignalTypeAfficheur=Afficheur(15,25,interstation.signaux[0].nom)
+prochainArretDistanceAfficheur=Afficheur(260,60,str(int(interstation.station.distance)))
+vitesseAfficheur=AfficheurVitesse(155,20)
+fuAfficheur=Afficheur(200,50,afficheurCouleurInitiale=GRIS,afficheurTexteInitial="FU")
+vacmaAfficheur=Afficheur(188,28,afficheurTexteInitial="VACMA")
+defautAfficheur=Afficheur(185,10,afficheurTexteInitial="Défaut")
+prochaineLimiteVitesseAfficheur=Afficheur(110,50,str(prochaineLimiteVitesse[1]))
+prochaineLimiteVitesseDistanceAfficheur=Afficheur(110,25,str(int(prochaineLimiteVitesse[0])))
+
 while not is_pressed("backspace"):
   vitesseAfficheur.raffraichir()
-  if prochainFeu[1]:
-    fill_rect(10,20,10,20,'red')
-    fill_rect(20,20,10,20,'white')
-  else:
-    fill_rect(10,20,10,20,'white')
-    fill_rect(20,20,10,20,'green')
+  interstation.raffraichirSignaux()
+  if interstation.signaux==[]:interstation=Interstation()
   raffraichirVB2(str(limiteVitesse),vitesse)
   if is_pressed("a") and is_pressed("p"):    
-    if not PA:print("PA active, "+str(monotonic()))
+    if not PA:print("PA activé, "+str(monotonic()))
     PA=True
     VACMA[4]=False
     afficheurModeConduite.afficheurChangerMode(True) # Afficher PA active
   elif is_pressed("c") and is_pressed("m"):
-    if PA:print("PA desactive, "+str(monotonic()))
+    if PA:print("PA desactivé, "+str(monotonic()))
     PA=False
     VACMA[4]=True
     afficheurModeConduite.afficheurChangerMode(False) # Afficher PA desactive
   raffraichirProchaineLimiteVitesse()
   prochaineLimiteVitesseAfficheur.ecrire(str(prochaineLimiteVitesse[1]))
   prochaineLimiteVitesseDistanceAfficheur.ecrire(str(int(prochaineLimiteVitesse[0])))
-  if prochainArret[0]<100:
+  if interstation.station.distance<100:
     if is_pressed("o"):ouverturePortesDifferee=200
     else:ouverturePortesDifferee-=1
     if prochainArret[1]:
@@ -219,10 +272,10 @@ while not is_pressed("backspace"):
       fill_rect(270,30,8,8,'black')
       fill_rect(260,43,8,8,'black')
       fill_rect(280,43,8,8,'black')
-  else:fill_rect(260,30,28,21,BLANCC)
-  prochainArretDistanceAfficheur.ecrire(str(int(prochainArret[0])))
-  prochainFeuDistanceAfficheur.ecrire(str(int(prochainFeu[0])))
-  if ouverturePortesDifferee>0 and prochainArret[0]<20 and vitesse<0.01:
+  prochainArretDistanceAfficheur.ecrire(str(int(interstation.station.distance)))
+  prochainSignalDistanceAfficheur.ecrire(str(int(interstation.signaux[0].distance)))
+  prochainSignalTypeAfficheur.ecrire(interstation.signaux[0].nom)
+  if ouverturePortesDifferee>0 and interstation.station.distance<20 and vitesse<0.01:
     PorteCarre('green')
     raffraichirPortesVB2("yellow")
     sleep(0.5)
@@ -239,8 +292,11 @@ while not is_pressed("backspace"):
     sleep(1)
     PorteCarre('red')
     afficheurModeConduite.afficheurRaffraichir()
+    ouverturePortesDifferee=0
+    interstation.station.arretComplete=True
+    raffraichirPortesVB2("green")
+    fill_rect(260,30,28,21,BLANCC)
     print("Station, "+str(monotonic()))
-    prochainArret[0]=-1
   if is_pressed("up") or is_pressed("down") or is_pressed("left") or is_pressed("right"):
   	if is_pressed("up") and int(cranManipulateur)<1:cranManipulateur+=0.1
   	elif is_pressed("down") and cranManipulateur>-1:cranManipulateur-=0.1
@@ -249,7 +305,7 @@ while not is_pressed("backspace"):
   	if cranManipulateur<-1:cranManipulateur=-1
   	elif cranManipulateur>1:cranManipulateur=1
   	raffraichirManipulateur(cranManipulateur)
-  if not FU and(not PA and cranManipulateur<0 and vitesse>0) or PA and (int(320-prochainArret[0])+int(arretDistance(vitesse))>=308 or (prochainFeu[1] and prochainFeu[0]-arretDistance(vitesse)<8) or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1])) or vitesse>limiteVitesse+2*vitessePlus)):
+  if not FU and(not PA and cranManipulateur<0 and vitesse>0) or PA and ((int(320-interstation.station.distance)+int(arretDistance(vitesse))>=308 and not interstation.station.arretComplete) or (interstation.signaux[0].couleur=="red" and interstation.signaux[0].distance-arretDistance(vitesse)<8) or (prochaineLimiteVitesse[1]<vitesse and prochaineLimiteVitesse[0]<=(10*(vitesse-prochaineLimiteVitesse[1])) or vitesse>limiteVitesse+2*vitessePlus)):
   	if PA:vitesse-=vitesseMoins
   	else:vitesse-=vitesseMoins*-cranManipulateur
   elif not FU and(not PA and cranManipulateur>0 or PA):
@@ -258,20 +314,17 @@ while not is_pressed("backspace"):
     	else:vitesse+=vitessePlus*cranManipulateur
   elif vitesse>0.0001 and not PA:vitesse-=0.0002
   if DefautOP and Defaut=="PE":vitesse-=0.01
-  prochainArret[0]-=vitesse/155
-  prochainFeu[0]-=vitesse/155
+  interstation.station.distance-=vitesse/155
+  interstation.signaux[0].distance-=vitesse/155
   prochaineLimiteVitesse[0]-=vitesse/155
-  if prochainArret[0]<0:
+  if interstation.station.distance<0:
   	prochainArret=[randrange(900,1600),faibleChance(),""]
   	initialiserAffichageVB2()
   	fill_rect(20,180,320,40,'white')
-  if prochainFeu[0]<0:
-    if prochainFeu[1] and AEAU[4]:
+  if interstation.signaux[0].distance<0:
+    if interstation.signaux[0].couleur=="red" and AEAU[4]:
       FU=True
       print("[AEAU] FU active, "+str(monotonic()))
-    if prochainArret[0]<580 and prochainArret[0]>500:prochainFeu=[prochainArret[0]-340,faibleChance()]
-    elif prochainArret[0]<=550:prochainFeu=[prochainArret[0]+10,faibleChance()]
-    else:prochainFeu=[randrange(150,250),faibleChance()]
   if prochaineLimiteVitesse[0]<0:
     limiteVitesse=prochaineLimiteVitesse[1]
     prochaineLimiteVitesse[1]=choice([40,50,60,70])
@@ -282,10 +335,9 @@ while not is_pressed("backspace"):
     #Panne Electrique
     Defaut=choice(["PE"])
   elif DefautOP and randrange(0,101)==0:DefautOP=False
-  if prochainFeu[1] and randrange(0,1000)==0:prochainFeu[1]=False
-  if prochainArret[0]<500 and prochainArret[0]>480:fill_rect(260,90,30,30,'red')
+  if interstation.signaux[0].couleur=="red" and randrange(0,1000)==0:pass
   if is_pressed("esc"):
-    if not FU and not is_pressed("esc"):print("FU active manuellement, "+str(monotonic()))
+    if not FU and not is_pressed("esc"):print("FU activé manuellement, "+str(monotonic()))
     FU=True
   if FU:vitesse-=(vitesseMoins*1.4)
   if FU:fuAfficheur.changerCouleur("black")
@@ -299,20 +351,21 @@ while not is_pressed("backspace"):
   if DefautOP:defautAfficheur.changerCouleur("orange")
   else:defautAfficheur.changerCouleur(GRIS)
   if FU and is_pressed("esc") and is_pressed("enter"):FU=False
-  if prochainArret[0]<330:
+  if interstation.station.distance<=330 and interstation.station.distance>=0:
     prochainArretDistance=arretDistance(vitesse)
-    if prochainArret[0]>320:fill_rect(0,180,320,40,'white')
-    fill_rect(0,190,int(320-prochainArret[0]),30,'blue')
-    if vitesse>8:fill_rect(int(320-prochainArret[0])+int(prochainArretDistance)-4,190,4,30,'white')
-    fill_rect(int(320-prochainArret[0])+int(prochainArretDistance)+6,190,2,30,'white')
-    fill_rect(int(320-prochainArret[0])+int(prochainArretDistance),190,4,30,'orange')
+    if interstation.station.distance>320:fill_rect(0,180,320,40,'white')
+    fill_rect(0,190,int(320-interstation.station.distance),30,'blue')
+    if vitesse>8:fill_rect(int(320-interstation.station.distance)+int(prochainArretDistance)-4,190,4,30,'white')
+    fill_rect(int(320-interstation.station.distance)+int(prochainArretDistance)+6,190,2,30,'white')
+    fill_rect(int(320-interstation.station.distance)+int(prochainArretDistance),190,4,30,'orange')
     fill_rect(302,220,19,2,'green')
     fill_rect(0,220,302,2,'red')
   if is_pressed("a") and is_pressed("d"):
     Commande=input("Commande ? ")
     if Commande=="def":exec(input("def eval ")+"="+input("def def eval "))
     elif Commande=="exec":exec(input("exec "))
-    elif Commande=="ProchainFeuFerme":prochainFeu[1]=True
+    elif Commande=="ProchainSignalFerme":interstation.signaux[0].etat=1
+    elif Commande=="ProchainSignalOuvert":interstation.signaux[0].etat=3
   if vitesse>0.1 and VACMA[4]:
     if is_pressed("control"):
       VACMA[1]+=1
@@ -323,33 +376,26 @@ while not is_pressed("backspace"):
   else:
     VACMA[1]=0
     VACMA[2]=0
-  if VACMA[1]>99 or VACMA[2]>399:
+  if VACMA[1]>99 or VACMA[2]>299:
     VACMA[0]=True
   else:VACMA[0]=False
   if VACMA[0]:VACMA[3]+=1
   else:VACMA[3]=0
   if VACMA[3]==150:
     FU=True
-    print("[VACMA] FU active, "+str(monotonic()))
+    print("[VACMA] FU activé, "+str(monotonic()))
   if str(vitesse)[0]=="-":vitesse=0
   if vitesse>=71:
-    if not FU:print("FU active, vitesse > 70, "+str(monotonic()))
+    if not FU:print("FU activé, vitesse > 70, "+str(monotonic()))
     FU=True
-  if prochainArret[0]>=330:
-    #fill_rect(20,180,320,40,'white')
+  if interstation.station.distance>=330:
     fill_rect(0,190,20,30,'blue')
     fill_rect(0,220,320,2,'red')
-    if prochainFeu[0]<130:
-      if prochainFeu[1]:fill_rect(int((8+prochainFeu[0])*2.5),190,10,10,'red')
-      else:fill_rect(int((8+prochainFeu[0])*2.5),190,10,10,'green')
-      fill_rect(10+int((8+prochainFeu[0])*2.5),190,10,10,"white") # Effacer les anciens signaux
-    else:fill_rect(20,190,10,10,"white")
     if prochaineLimiteVitesse[0]<330:
-    	draw_string(str(prochaineLimiteVitesse[1]),int((8+prochaineLimiteVitesse[0])*2.5),200)
-    	fill_rect(20+int((8+prochaineLimiteVitesse[0])*2.5),200,20,18,"white") # Effacer les anciens TIV
-    else:fill_rect(20,200,20,18,"white")
-    if prochainArret[0]<515:
-      fill_rect(int((prochainArret[0]-320)*2.5),217,300,10,'black')
-      draw_string(prochainArret[2],int((prochainArret[0]-300)*2.5),198)
+    	draw_string(str(prochaineLimiteVitesse[1]),int((8+prochaineLimiteVitesse[0])*2.5),201)
+    	fill_rect(20+int((8+prochaineLimiteVitesse[0])*2.5),201,20,18,"white") # Effacer les anciens TIV
+    else:fill_rect(20,201,20,18,"white")
+    if interstation.station.distance<515:
+      fill_rect(int((interstation.station.distance-320)*2.5),217,300,10,'black')
+      draw_string(interstation.station.nom,int((interstation.station.distance-300)*2.5),198)
     fill_rect(0,190,20,30,'blue')
-  elif prochainArret[0]>322:fill_rect(0,180,320,40,BLANCC)
